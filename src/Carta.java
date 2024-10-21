@@ -1,4 +1,3 @@
-import java.util.*;
 /**
  * Esta clase representa las cartas de la baraja Española
  */

@@ -3,30 +3,37 @@ import java.util.*;
 public class Burro {
     private Baraja baraja;
     private List<Jugador> jugadores;
+    private int contadorRondas,llaveCantorBurro;
 
     public Burro() {
         baraja = new Baraja();
         jugadores = new ArrayList<>();
+        contadorRondas = 1;
+        llaveCantorBurro = 0;
     }
 
     public void iniciarJuego() {
         Scanner scanner = new Scanner(System.in);
-        int cantidadJugadores, vueltas = 0, usuario;
+        int cantidadJugadores;
         boolean burroCompleto;
+
         System.out.println("\nBienvenido al juego ¡El burro!");
-        System.out.println("Ingresa cantidad jugadores (4 - 10): ");
+        System.out.println("Ingresa cantidad jugadores (3 - 10): ");
         do {
             cantidadJugadores = scanner.nextInt();
         } while (cantidadJugadores < 3 || cantidadJugadores > 10);
+
         preparaJugadores(cantidadJugadores);
+
         do {
-            vueltas++;
-            System.out.println("\t   Ronda " + vueltas);
             preparaBaraja();
             reparteBaraja();
+            System.out.println("Iniciando ronda " + contadorRondas);
+            llaveCantorBurro=0;
             ronda();
             burroCompleto = encuentraGanador();
-        } while (!burroCompleto/*&&cantidadJugadores>1*/);
+            contadorRondas++; // Incrementar contador de rondas
+        } while (!burroCompleto); // Continua hasta que haya un ganador
     }
 
     public void preparaJugadores(int cantidad) {
@@ -49,25 +56,34 @@ public class Burro {
         for (Jugador jugador : jugadores) {
             jugador.setMano(baraja.tomar4cartas());
         }
-        System.out.println("...Repartiendo cartas...");
     }
 
     public boolean encuentraGanador() {
         boolean cadenaCompleta = false;
-        int posPerdedor = 0;
+        int posPerdedor = -1;
+
+        // Busca al jugador que ha completado "burro"
         for (int i = 0; i < jugadores.size(); i++) {
             if (jugadores.get(i).burroEstaCompleto()) {
                 cadenaCompleta = true;
                 posPerdedor = i;
-            } else {
-                jugadores.get(i).getCantidadDeLetrasEnCadena();
+                break; // Salimos del bucle al encontrar al perdedor
             }
         }
+
         if (cadenaCompleta) {
-            System.out.println("Juego terminado!");
-            System.out.println(jugadores.get(posPerdedor).getNombre() + " es el burro! (jugador eliminado)");
+            System.out.println("Jugador eliminado: " + jugadores.get(posPerdedor).getNombre());
+
+            // Eliminamos al jugador de la lista
+            jugadores.remove(posPerdedor);
+
+            // Verificamos si queda solo un jugador
+            if (jugadores.size() == 1) {
+                System.out.println("Ganador del juego: " + jugadores.get(0).getNombre());
+                return true; // Termina el juego, ya que hay un ganador
+            }
         }
-        return cadenaCompleta;
+        return false; // Continuar el juego
     }
 
     public void ronda() {
@@ -88,8 +104,9 @@ public class Burro {
                 if (userAction != 0) {
                     userAction -= 1;
                     cartasDeIntercambio.add(jugadores.get(i).entregaCarta(userAction));
-                } else {
+                } else if(llaveCantorBurro == 0){
                     jugadorCantor[i] = true;
+                    llaveCantorBurro=1;
                 }
             }
             for (boolean b : jugadorCantor) {
@@ -111,21 +128,15 @@ public class Burro {
         int primerLugar = encuentraJugador(pilaDeManos.get(0));
         int ultimoLugar = encuentraJugador(pilaDeManos.get(pilaDeManos.size() - 1));
         System.out.println(pilaDeManos.get(0) + " gritó ¡Burro!");
-        System.out.println(pilaDeManos);
-        System.out.println("Su mano: ");
+        System.out.println("Cartas en mano: ");
         jugadores.get(primerLugar).mostrarMano();
         if (jugadores.get(primerLugar).manoEsDelMismoValor()) {
-            System.out.println("Perdedor: " + pilaDeManos.get(pilaDeManos.size() - 1));
-            System.out.println("su cadena:\n" + jugadores.get(ultimoLugar).getBurro());
             jugadores.get(ultimoLugar).agregaLetraABurro();
-            System.out.println("...Agregando letra...");
-            System.out.println(jugadores.get(ultimoLugar).getBurro());
+            System.out.println("Cadena al momento: " + jugadores.get(ultimoLugar).getBurro() + " del jugador " + pilaDeManos.get(pilaDeManos.size() - 1));
         } else {
-            System.out.println(pilaDeManos.get(0) + " gritó ¡burro! sin tener la mano correcta");
-            System.out.println("su cadena:\n" + jugadores.get(primerLugar).getBurro());
+            System.out.println(pilaDeManos.get(0) + " gritó ¡burro! sin reunir las cartas correctas");
             jugadores.get(primerLugar).agregaLetraABurro();
-            System.out.println("...Agregando letra...");
-            System.out.println(jugadores.get(primerLugar).getBurro());
+            System.out.println("Cadena al momento: \"" + jugadores.get(primerLugar).getBurro() + "\" del jugador " + pilaDeManos.get(0));
         }
     }
 
