@@ -1,22 +1,62 @@
-public class Carta {
-    private String palo; // Ejemplo: "oros", "copas", "espadas", "bastos"
-    private String valor; // Ejemplo: "1", "2", "3", "rey", "as"
-
-    public Carta(String palo, String valor) {
-        this.palo = palo;
-        this.valor = valor;
+import java.util.*;
+/**
+ * Esta clase representa las cartas de la baraja Española
+ */
+public class Carta
+{
+    private int valor;
+    private String palo;
+    /**
+     * Contructor no parametrizado dela clase Carta
+     */
+    public Carta() {
+        this.valor = 0;
+        this.palo = palo= "";
     }
-
-    public String getPalo() {
+    /**
+     * Constructor parametrizado de la clase Carta
+     * @param palo String que indica el palo de la carta
+     * @param valor valor numerico que se le asignarâ a la carta
+     */
+    public Carta(String palo, int valor)
+    {
+        this.valor=valor;
+        this.palo=palo;
+    }
+    /**
+     * Constructor parametrizado del objeto de clase Carta
+     * @param carta carta que recibe para crear una copia de ella
+     */
+    public Carta(Carta carta)
+    {
+        this.valor= carta.valor;
+        this.palo= carta.palo;
+    }
+    /**
+     * Getter de Palo
+     * @return String palo
+     */
+    public String getPalo(){
         return palo;
     }
-
-    public String getValor() {
+    /**
+     * Getter de Valor
+     * @return int valor
+     */
+    public int getValor(){
         return valor;
     }
-
-    @Override
-    public String toString() {
-        return valor + " de " + palo;
+    /**
+     * Metodo ToSting de case Carta
+     * @return String de carta
+     */
+    public String toString(){
+        String cadena= new String();
+        cadena= "["+valor;
+        if (valor== 10) cadena+=" Sota";
+        else if (valor== 11) cadena+=" Caballo";
+        else if (valor== 12) cadena+=" Rey";
+        cadena+=" "+palo+"]";
+        return cadena;
     }
 }

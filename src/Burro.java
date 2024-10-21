@@ -1,93 +1,161 @@
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
-import java.util.Scanner;
+import java.util.*;
 
 public class Burro {
-    private List<Jugador> jugadores;
     private Baraja baraja;
-    private Scanner scanner;
+    private List<Jugador> jugadores;
 
-    public Burro(List<String> nombres) {
+    public Burro() {
+        baraja = new Baraja();
         jugadores = new ArrayList<>();
-        for (String nombre : nombres) {
+    }
+
+    public void iniciarJuego() {
+        Scanner scanner = new Scanner(System.in);
+        int cantidadJugadores, vueltas = 0, usuario;
+        boolean burroCompleto;
+        System.out.println("\nBienvenido al juego ¡El burro!");
+        System.out.println("Ingresa cantidad jugadores (4 - 10): ");
+        do {
+            cantidadJugadores = scanner.nextInt();
+        } while (cantidadJugadores < 3 || cantidadJugadores > 10);
+        preparaJugadores(cantidadJugadores);
+        do {
+            vueltas++;
+            System.out.println("\t   Ronda " + vueltas);
+            preparaBaraja();
+            reparteBaraja();
+            ronda();
+            burroCompleto = encuentraGanador();
+        } while (!burroCompleto/*&&cantidadJugadores>1*/);
+    }
+
+    public void preparaJugadores(int cantidad) {
+        Scanner scanner = new Scanner(System.in);
+        String nombre;
+        for (int i = 0; i < cantidad; i++) {
+            System.out.println("Ingresa el nombre del jugador " + (i + 1) + ": ");
+            nombre = scanner.next();
             jugadores.add(new Jugador(nombre));
         }
-        baraja = new Baraja();
-        baraja.mezclar();
-        scanner = new Scanner(System.in);
     }
 
-    public void iniciar() {
-        // Repartir cartas
+    public void preparaBaraja() {
+        baraja.vaciarBaraja();
+        baraja.creaBaraja(jugadores.size());
+        baraja.mezclarBaraja();
+    }
+
+    public void reparteBaraja() {
         for (Jugador jugador : jugadores) {
-            List<Carta> mano = baraja.repartir(4);
-            for (Carta carta : mano) {
-                jugador.agregarCarta(carta);
-            }
+            jugador.setMano(baraja.tomar4cartas());
         }
-
-        // Comienza el juego
-        boolean juegoActivo = true;
-        while (juegoActivo) {
-            for (Jugador jugador : jugadores) {
-                System.out.println(jugador);
-                if (verificarGanador(jugador)) {
-                    System.out.println(jugador.getNombre() + " ha ganado!");
-                    juegoActivo = false;
-                    break;
-                }
-
-                // Pedir carta a otro jugador
-                pedirCarta(jugador);
-            }
-        }
+        System.out.println("...Repartiendo cartas...");
     }
 
-    private boolean verificarGanador(Jugador jugador) {
-        // Verificar si el jugador tiene una combinación
-        return jugador.tieneCombinacion("mismoPalo") || jugador.tieneCombinacion("mismoNumero");
-    }
-
-    private void pedirCarta(Jugador jugador) {
-        System.out.println(jugador.getNombre() + ", elige a quién le quieres pedir una carta:");
-        for (Jugador j : jugadores) {
-            if (!j.equals(jugador)) {
-                System.out.println(j.getNombre());
-            }
-        }
-
-        String nombreOponente = scanner.nextLine();
-        Jugador oponente = null;
-
-        for (Jugador j : jugadores) {
-            if (j.getNombre().equalsIgnoreCase(nombreOponente) && !j.equals(jugador)) {
-                oponente = j;
-                break;
-            }
-        }
-
-        if (oponente != null && !oponente.getMano().getCartas().isEmpty()) {
-            System.out.println("Elige un valor de carta que quieres pedir:");
-            String valorPedido = scanner.nextLine();
-            Carta cartaPedida = null;
-
-            for (Carta carta : oponente.getMano().getCartas()) {
-                if (carta.getValor().equalsIgnoreCase(valorPedido)) {
-                    cartaPedida = carta;
-                    break;
-                }
-            }
-
-            if (cartaPedida != null) {
-                oponente.quitarCarta(cartaPedida);
-                jugador.agregarCarta(cartaPedida);
-                System.out.println(jugador.getNombre() + " ha recibido " + cartaPedida);
+    public boolean encuentraGanador() {
+        boolean cadenaCompleta = false;
+        int posPerdedor = 0;
+        for (int i = 0; i < jugadores.size(); i++) {
+            if (jugadores.get(i).burroEstaCompleto()) {
+                cadenaCompleta = true;
+                posPerdedor = i;
             } else {
-                System.out.println(oponente.getNombre() + " no tiene cartas de valor " + valorPedido);
+                jugadores.get(i).getCantidadDeLetrasEnCadena();
             }
-        } else {
-            System.out.println("El jugador seleccionado no tiene cartas.");
         }
+        if (cadenaCompleta) {
+            System.out.println("Juego terminado!");
+            System.out.println(jugadores.get(posPerdedor).getNombre() + " es el burro! (jugador eliminado)");
+        }
+        return cadenaCompleta;
+    }
+
+    public void ronda() {
+        Scanner scanner = new Scanner(System.in);
+        int userAction, cantidadJugadores = jugadores.size();
+        boolean cantoBurro = false;
+        boolean[] jugadorCantor = new boolean[jugadores.size()];
+        ArrayList<Carta> cartasDeIntercambio = new ArrayList<>();
+        do {
+            Arrays.fill(jugadorCantor, false);
+            for (int i = 0; i < cantidadJugadores; i++) {
+                System.out.println("Cartas de " + jugadores.get(i).getNombre() + ": ");
+                jugadores.get(i).mostrarMano();
+                System.out.println("Ingresa el número de carta a intercambiar o ingresa 0 para gritar ¡Burro!");
+                do {
+                    userAction = scanner.nextInt();
+                } while (userAction < 0 || userAction > 4);
+                if (userAction != 0) {
+                    userAction -= 1;
+                    cartasDeIntercambio.add(jugadores.get(i).entregaCarta(userAction));
+                } else {
+                    jugadorCantor[i] = true;
+                }
+            }
+            for (boolean b : jugadorCantor) {
+                if (b) {
+                    cantoBurro = true;
+                    break;
+                }
+            }
+            if (!cantoBurro) {
+                Collections.rotate(cartasDeIntercambio, -1);
+                jugadores.forEach(jugador -> {
+                    jugador.agregarCarta(cartasDeIntercambio.get(0));
+                    cartasDeIntercambio.remove(0);
+                });
+            }
+        } while (!cantoBurro);
+
+        ArrayList<String> pilaDeManos = obtenerPilaDeManos(cantidadJugadores, jugadorCantor);
+        int primerLugar = encuentraJugador(pilaDeManos.get(0));
+        int ultimoLugar = encuentraJugador(pilaDeManos.get(pilaDeManos.size() - 1));
+        System.out.println(pilaDeManos.get(0) + " gritó ¡Burro!");
+        System.out.println(pilaDeManos);
+        System.out.println("Su mano: ");
+        jugadores.get(primerLugar).mostrarMano();
+        if (jugadores.get(primerLugar).manoEsDelMismoValor()) {
+            System.out.println("Perdedor: " + pilaDeManos.get(pilaDeManos.size() - 1));
+            System.out.println("su cadena:\n" + jugadores.get(ultimoLugar).getBurro());
+            jugadores.get(ultimoLugar).agregaLetraABurro();
+            System.out.println("...Agregando letra...");
+            System.out.println(jugadores.get(ultimoLugar).getBurro());
+        } else {
+            System.out.println(pilaDeManos.get(0) + " gritó ¡burro! sin tener la mano correcta");
+            System.out.println("su cadena:\n" + jugadores.get(primerLugar).getBurro());
+            jugadores.get(primerLugar).agregaLetraABurro();
+            System.out.println("...Agregando letra...");
+            System.out.println(jugadores.get(primerLugar).getBurro());
+        }
+    }
+
+    private int encuentraJugador(String nombre) {
+        int posicion = 0;
+        for (int i = 0; i < jugadores.size(); i++) {
+            if (jugadores.get(i).getNombre().equals(nombre)) {
+                posicion = i;
+            }
+        }
+        return posicion;
+    }
+
+    private ArrayList<String> obtenerPilaDeManos(int cantidadJugadores, boolean[] jugadorCantor) {
+        ArrayList<String> posibleGanador = new ArrayList<>();
+        for (int i = 0; i < cantidadJugadores; i++) {
+            if (jugadorCantor[i]) {
+                posibleGanador.add(jugadores.get(i).getNombre());
+            }
+        }
+        Collections.shuffle(posibleGanador);
+        String primerLugar = posibleGanador.get(0);
+        ArrayList<String> ordenDeManos = new ArrayList<>();
+        for (Jugador jugador : jugadores) {
+            if (!jugador.getNombre().equals(primerLugar)) {
+                ordenDeManos.add(jugador.getNombre());
+            }
+        }
+        Collections.shuffle(ordenDeManos);
+        ordenDeManos.add(0, primerLugar);
+        return ordenDeManos;
     }
 }

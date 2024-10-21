@@ -1,31 +1,47 @@
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.IntStream;
 
 public class Baraja {
-    private List<Carta> cartas;
+    private List<Carta> baraja;
+    private String[] palo;
+    private int numeroJugadores;
 
     public Baraja() {
-        cartas = new ArrayList<>();
-        String[] palos = {"oros", "copas", "espadas", "bastos"};
-        String[] valores = {"1", "2", "3", "4", "5", "6", "7", "sota", "caballo", "rey", "as"};
+        baraja = new ArrayList<>();
+        palo = new String[]{"Oros", "Copas", "Espadas", "Bastos"};
+    }
 
-        for (String palo : palos) {
-            for (String valor : valores) {
-                cartas.add(new Carta(palo, valor));
-            }
+    public void creaBaraja(int numeroJugadores) {
+        for (String p : palo) {
+            IntStream.rangeClosed(1, numeroJugadores).forEach(j -> baraja.add(new Carta(p, j)));
         }
     }
 
-    public void mezclar() {
-        Collections.shuffle(cartas);
+    public void vaciarBaraja() {
+        baraja.clear();
     }
 
-    public List<Carta> repartir(int cantidad) {
+    public void mezclarBaraja() {
+        Collections.shuffle(baraja);
+    }
+
+    public Carta entregaCarta() {
+        return baraja.remove(0);
+    }
+
+    public List<Carta> tomar4cartas() {
         List<Carta> mano = new ArrayList<>();
-        for (int i = 0; i < cantidad && !cartas.isEmpty(); i++) {
-            mano.add(cartas.remove(0));
-        }
+        IntStream.range(0, 4).forEach(i -> mano.add(entregaCarta()));
         return mano;
+    }
+
+    public int getNumeroJugadores() {
+        return numeroJugadores;
+    }
+
+    public void setNumeroJugadores(int numeroJugadores) {
+        this.numeroJugadores = numeroJugadores;
     }
 }
